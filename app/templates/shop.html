@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block title %}Tienda — La Carreta del Café{% endblock %}
+
+{% block content %}
+<h1>Tienda</h1>
+<p class="small-muted">Productos disponibles (simulados). Reemplaza los placeholders con datos reales desde la BD cuando quieras.</p>
+  <div>
+    <a class="btn" href="{{ url_for('logout') }}">Logout</a>
+  </div>
+<section class="grid">
+  <div class="preview-card center" style="flex-direction:column">
+    <img
+            src="{{ url_for('static', filename='img/product-placeholder.png') }}"
+            data-hover="{{ url_for('static', filename='img/product-placeholder-hover.png') }}"
+            alt="producto"
+            class="hover-img"
+            style="max-width:220px;border-radius:8px;margin-bottom:12px;transition:0.3s ease"
+    >
+    <h3>Premium Tiquicia</h3>
+    <p>$18.50 / 250 g</p>
+    <a  href="{{ url_for('add_to_cart', product_id='premium_tiquicia') }}" class="btn">Agregar al carrito</a>
+  </div>
+
+  <div class="preview-card center" style="flex-direction:column">
+    <img src="{{ url_for('static', filename='img/hacienda araya.png') }}" alt="producto" style="max-width:220px;border-radius:8px;margin-bottom:12px">
+    <h3>Hacienda Araya</h3>
+    <p>$20.50 / 250 g</p>
+    <a href="{{ url_for('add_to_cart', product_id='hacienda_araya')}}" class="btn small">Agregar al carrito</a>
+  </div>
+
+  <div class="preview-card center" style="flex-direction:column">
+    <img src="{{ url_for('static', filename='img/fincadota.png') }}" alt="producto" style="max-width:220px;border-radius:8px;margin-bottom:12px">
+    <h3>Finca Dota</h3>
+    <p>$15.30 / 250 g</p>
+    <a class="btn small" href="{{ url_for('add_to_cart', product_id='finca_dota')}}">Agregar al carrito</a>
+  </div>
+
+  <div class="preview-card center" style="flex-direction:column">
+    <img src="{{ url_for('static', filename='img/product-placeholder.png') }}" alt="producto" style="max-width:220px;border-radius:8px;margin-bottom:12px">
+    <h3>Premium Coffee Blend</h3>
+    <p>$18.50 / 250g</p>
+    <a class="btn small" href="{{ url_for('add_to_cart', product_id='premium_coffee_blend')}}">Agregar al carrito</a>
+  </div>
+
+  <div class="preview-card center" style="flex-direction:column">
+    <img src="{{ url_for('static', filename='img/Finca el Alto.png') }}" alt="producto" style="max-width:220px;border-radius:8px;margin-bottom:12px">
+    <h3>Lote Finca El Alto</h3>
+    <p>Varietal: Caturra,Proceso: Honey — Altura: 1400 m.s.n.m</p>
+    <p>$15.50 / 250 g</p>
+    <a class="btn small" href="{{ url_for('add_to_cart', product_id='finca_el_alto')}}">Agregar al carrito</a>
+  </div>
+
+  <div class="preview-card center" style="flex-direction:column">
+    <img src="{{ url_for('static', filename='img/tarracoffee.png') }}" alt="producto" style="max-width:220px;border-radius:8px;margin-bottom:12px">
+    <h3>Finca Tarrazú</h3>
+    <p>Descargá ficha técnica</p>
+    <p>$16.50 / 250 g</p>
+    <a class="btn small" href="{{ url_for('add_to_cart', product_id='finca_tarrazu')}}">Agregar al carrito</a>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard — La Carreta del Café{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="small-muted">Bienvenido {{ username }} — Panel de ventas y pedidos</p>
+  </div>
+  <div>
+    <a class="btn" href="{{ url_for('logout') }}">Logout</a>
+  </div>
+</div>
+
+<div class="dashboard-layout">
+  <!-- main -->
+  <section>
+    <div class="kpis-row">
+      <div class="kpi-large">
+        <h3>Total Sales (Month)</h3>
+        <p style="font-size:1.6rem;font-weight:800">$12,430</p>
+        <p class="small-muted">vs last month +8.4%</p>
+      </div>
+
+      <div class="kpi-large">
+        <h3>Conversion Rate</h3>
+        <p style="font-size:1.6rem;font-weight:800">4.7%</p>
+        <p class="small-muted">Benchmark: specialty coffee B2B</p>
+      </div>
+
+      <div class="kpi-large">
+        <h3>Avg Order Value</h3>
+        <p style="font-size:1.6rem;font-weight:800">$87.50</p>
+        <p class="small-muted">Orders this month: 142</p>
+      </div>
+    </div>
+
+    <div style="margin-top:18px" class="preview-card">
+      <h3>Sales by day (simulated)</h3>
+      <div class="chart-bars" aria-hidden="true">
+        <div class="bar" style="height:46%">46</div>
+        <div class="bar" style="height:62%">62</div>
+        <div class="bar" style="height:38%">38</div>
+        <div class="bar" style="height:72%">72</div>
+        <div class="bar" style="height:55%">55</div>
+        <div class="bar" style="height:88%">88</div>
+      </div>
+      <p class="small-muted" style="margin-top:8px">Datos simulados para demostración —  BI o Excel sería integrado.</p>
+    </div>
+
+    <div style="margin-top:18px" class="preview-card">
+      <h3>Orders Timeline</h3>
+      <p class="small-muted">Últimos pedidos procesados</p>
+      <table class="orders-table" style="margin-top:12px">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Client</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1024</td>
+            <td>Juan Mora</td>
+            <td>$75.90</td>
+            <td><span class="status review status-await">Review Needed</span></td>
+          </tr>
+          <tr>
+            <td>1023</td>
+            <td>Café Oro</td>
+            <td>$540.00</td>
+            <td><span class="status ready">Ready to Ship</span></td>
+          </tr>
+          <tr>
+            <td>1022</td>
+            <td>Brew Co.</td>
+            <td>$980.00</td>
+            <td><span class="status packing">Packing</span></td>
+          </tr>
+          <tr>
+            <td>1021</td>
+            <td>Anna Pérez</td>
+            <td>$120.00</td>
+            <td><span class="status await">Awaiting Payment</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- side -->
+  <aside>
+    <div class="preview-card">
+      <h4>Quick Stats</h4>
+      <p><strong>Pending shipments:</strong> 12</p>
+      <p><strong>Orders today:</strong> 34</p>
+      <p><strong>Top product:</strong> Premium Coffee Blend</p>
+    </div>
+
+    <div class="preview-card" style="margin-top:14px">
+      <h4>Export & Logistics</h4>
+      <p class="small-muted">Coordina exportaciones, documentos y seguimiento desde aquí (integrar ERP/Logistics).</p>
+      <button class="btn small" style="margin-top:8px">Open logistics panel</button>
+    </div>
+  </aside>
+</div>
+
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}Contact Sales — La Carreta del Café{% endblock %}
+
+{% block content %}
+<h1>Contact Sales</h1>
+
+<div class="form-card">
+  <form method="POST" action="#">
+    <div class="form-field">
+      <label>Nombre / Empresa</label>
+      <input type="text" name="name" placeholder="Ej: Luis Márquez">
+    </div>
+    <div class="form-field">
+      <label>Correo</label>
+      <input type="text" name="email" placeholder="name@company.com">
+    </div>
+    <div class="form-field">
+      <label>Mensaje</label>
+      <textarea name="message" rows="4" placeholder="Cuéntanos tu interés"></textarea>
+    </div>
+
+    <button class="btn" type="submit">Enviar</button>
+  </form>
+</div>
+
+<p style="margin-top:14px">Si necesitas una cuenta User (dashboard interno), por favor escribe a <b>sales@lacarretadelcafe.com</b></p>
+{% endblock %}

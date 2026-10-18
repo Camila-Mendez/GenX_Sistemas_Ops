@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block title %}La Carreta del Café — Inicio{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="carousel">
+    <!-- slide 1 -->
+    <div class="carousel-slide active" style="background: linear-gradient(90deg, rgba(58,32,15,0.6), rgba(61,34,17,0.3));">
+      <div class="hero-left">
+        <h1 class="hero-title">Cafés de microlote con trazabilidad real</h1>
+        <p class="hero-sub">Conectamos productores costarricenses con compradores internacionales. Transparencia, calidad y comercio justo.</p>
+        <p style="margin-top:14px;">
+          <a href="{{url_for('shop')}}" class="btn">Visitar tienda</a>
+          <a href="{{url_for('contactsales')}}" class="btn small outline">Contact Sales</a>
+        </p>
+      </div>
+      <div class="hero-right">
+        <img src="{{ url_for('static', filename='img/carousel-1.png') }}" alt="Campo de café" />
+      </div>
+    </div>
+
+    <!-- slide 2 -->
+    <div class="carousel-slide" style="background: linear-gradient(90deg, rgba(58,32,15,0.6), rgba(61,34,17,0.3));">
+      <div class="hero-left">
+        <h1 class="hero-title">Fichas técnicas y calidad certificada</h1>
+        <p class="hero-sub">Laboratorios y Q-Graders para asegurar perfiles de taza reproducibles.</p>
+      </div>
+      <div class="hero-right">
+        <img src="{{ url_for('static', filename='img/carousel-2.png') }}" alt="Q-grader cup tasting" />
+      </div>
+    </div>
+
+    <!-- slide 3 -->
+    <div class="carousel-slide" style="background: linear-gradient(90deg, rgba(58,32,15,0.6), rgba(61,34,17,0.3));">
+      <div class="hero-left">
+        <h1 class="hero-title">Logística y exportación simplificada</h1>
+        <p class="hero-sub">Coordinamos desde la finca hasta la llegada al comprador internacional.</p>
+      </div>
+      <div class="hero-right">
+        <img src="{{ url_for('static', filename='img/carousel-3.png') }}" alt="Logística de exportación" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="jumbotron">
+  <h3 style="margin:0;color:var(--dark)">Nuestra misión</h3>
+  <p style="margin-top:8px" class="small-muted">Facilitar la venta directa de microlotes premium con trazabilidad, mejores precios para productores y procesos logísticos confiables.</p>
+</section>
+
+<section class="grid">
+  <div class="kpi">
+    <h3>Para productores</h3>
+    <p>Digitalización, fichas técnicas, visibilidad internacional y mejores márgenes.</p>
+  </div>
+  <div class="kpi">
+    <h3>Para compradores</h3>
+    <p>Microlotes exclusivos, trazabilidad y pagos transparentes.</p>
+  </div>
+  <div class="kpi">
+    <h3>Servicios</h3>
+    <p>Logística, masterplans, marketing y soporte para exportación.</p>
+  </div>
+</section>
+
+{% endblock %}

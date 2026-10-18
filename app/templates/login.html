@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}Login — La Carreta{% endblock %}
+
+{% block content %}
+<h1>Login</h1>
+
+<div style="display:flex;gap:24px;flex-wrap:wrap;">
+  <div class="form-card">
+    <form method="POST">
+      <div class="form-field">
+        <label>Usuario</label>
+        <input type="text" name="username" required>
+      </div>
+      <div class="form-field">
+        <label>Contraseña</label>
+        <input type="password" name="password" required>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button class="btn" type="submit" name="role" value="user">Login as User (dashboard)</button>
+        <button class="btn" type="submit" name="role" value="shopper">Login as Shopper</button>
+      </div>
+    </form>
+
+    {% if error %}
+      <p style="color:red;margin-top:8px;">{{ error }}</p>
+    {% endif %}
+  </div>
+
+  <div class="preview-card">
+    <h3>¿No tienes cuenta?</h3>
+    <p>Si sos productor y querés vender en la plataforma, <a href="{{ url_for('register') }}">regístrate como Shopper</a>. Para cuentas User (dashboard) contacta a Sales.</p>
+  </div>
+</div>
+
+{% endblock %}
