@@ -4,7 +4,7 @@ Aplicación web en Flask para **GenX, S.A.**, empresa que ofrece arquitecturas d
 
 El portal está pensado para ejecutarse **sobre la propia infraestructura DR del proyecto**: se publica en la IP virtual de keepalived y muestra qué nodo (activo o pasivo) está atendiendo, para evidenciar el failover en la demostración.
 
-> Esta rama reutiliza la estructura y el esquema de rutas de *La Carreta del Café* (rutas públicas → login con dos tipos → panel interno / zona de cliente → flujo de solicitud), con una nueva identidad visual y persistencia real en base de datos.
+> Esta rama reutiliza la estructura y el esquema de rutas de *La Carreta del Café* (rutas públicas → login con dos tipos → panel interno / zona de cliente → flujo de solicitud), con una nueva identidad visual y persistencia real en MySQL.
 
 ## Funcionalidades
 
@@ -33,16 +33,26 @@ El portal está pensado para ejecutarse **sobre la propia infraestructura DR del
 
 ## Base de datos
 
-Compatible con **PostgreSQL, MySQL/MariaDB y SQL Server** (vía SQLAlchemy). Se elige con la variable `DB_ENGINE`; sin configurar, usa SQLite local para desarrollo. Guía paso a paso: [docs/BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md).
+**MySQL 8** instalado directamente en las VMs Ubuntu. El modelo físico se crea en la VM con los scripts de `sql/`, y la app solo se conecta a través de **un único script de conexión**, `app/utilities/db_connection.py`, que usa PyMySQL y ejecuta SQL directo con parámetros. No hay ORM y la app no crea tablas. Guía completa, incluida la integración con DRBD y keepalived: [docs/BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md).
 
 ## Instalación rápida
 
+En la VM, como root de MySQL (cambia antes la contraseña del script 01):
+
+```bash
+sudo mysql < sql/01_crear_bd_y_usuario.sql
+sudo mysql < sql/02_modelo_fisico.sql
+sudo mysql < sql/03_datos_iniciales.sql
+```
+
+La app:
+
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate          # Windows: .\.venv\Scripts\Activate.ps1
+source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env               # editar valores
-flask --app run init-db            # crea tablas y planes
+cp .env.example .env               # poner DB_PASSWORD y SECRET_KEY
+flask --app run check-db           # prueba la conexión
 flask --app run create-user admin --role admin
 python run.py                      # http://127.0.0.1:5000
 ```
@@ -51,24 +61,36 @@ Para escuchar en la red (servidores Ubuntu): `FLASK_HOST=0.0.0.0 python run.py`.
 
 ## Pruebas
 
+Las pruebas usan un MySQL real con una base **separada** (`genx_test`) y cargan los mismos scripts `02` y `03`. Se crea una sola vez:
+
+```sql
+CREATE DATABASE genx_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'genx_test'@'localhost' IDENTIFIED BY 'genx_test';
+GRANT ALL PRIVILEGES ON genx_test.* TO 'genx_test'@'localhost';
+```
+
 ```bash
 pytest -q
 ```
+
+Si no hay MySQL disponible, las pruebas se omiten. Para usar otros datos, define `TEST_DB_HOST`, `TEST_DB_NAME`, `TEST_DB_USER` y `TEST_DB_PASSWORD`.
 
 ## Estructura del proyecto
 
 ```text
 ├── app/
-│   ├── static/            # styles.css, favicon y logo
-│   ├── templates/         # vistas Jinja2
-│   ├── utilities/db.py    # instancia SQLAlchemy, health check, nombre del nodo
-│   ├── cli.py             # comandos init-db y create-user
-│   ├── config.py          # arma la cadena de conexión según DB_ENGINE
-│   ├── models.py          # usuarios, planes, solicitudes, bitácora, mensajes
-│   ├── routes.py
+│   ├── static/                     # styles.css, favicon y logo
+│   ├── templates/                  # vistas Jinja2
+│   ├── utilities/db_connection.py  # ÚNICO acceso a MySQL (conexión + helpers SQL)
+│   ├── cli.py                      # comandos check-db y create-user
+│   ├── config.py                   # SECRET_KEY y nombre del nodo
+│   ├── routes.py                   # rutas con consultas SQL
 │   └── __init__.py
 ├── docs/BASE_DE_DATOS.md
-├── sql/                   # creación de base y usuario por motor
+├── sql/
+│   ├── 01_crear_bd_y_usuario.sql
+│   ├── 02_modelo_fisico.sql
+│   └── 03_datos_iniciales.sql
 ├── tests/
 ├── .env.example
 ├── requirements.txt

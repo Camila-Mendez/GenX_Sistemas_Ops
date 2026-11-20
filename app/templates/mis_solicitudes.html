@@ -14,11 +14,11 @@
     <span class="status">{{ sr.status }}</span>
   </div>
   <ul class="summary-list">
-    {% for item in sr.items %}
-      <li><span>{{ item.plan.name }} × {{ item.servers }}</span><span>${{ '%.2f'|format(item.unit_price * item.servers) }}</span></li>
+    {% for item in sr.detalle %}
+      <li><span>{{ item.name }} × {{ item.servers }}</span><span>${{ '%.2f'|format(item.unit_price * item.servers) }}</span></li>
     {% endfor %}
   </ul>
-  <div class="summary"><span class="muted small">{{ sr.created_at.strftime('%d/%m/%Y %H:%M') }} UTC</span><strong>${{ '%.2f'|format(sr.total_monthly) }} / mes</strong></div>
+  <div class="summary"><span class="muted small">{{ sr.created_at.strftime('%d/%m/%Y %H:%M') }}</span><strong>${{ '%.2f'|format(sr.total_monthly) }} / mes</strong></div>
 </article>
 {% else %}
 <div class="card empty">
