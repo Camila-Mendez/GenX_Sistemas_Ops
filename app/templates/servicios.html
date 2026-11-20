@@ -24,7 +24,7 @@
 </section>
 <p class="center"><a class="btn" href="{{ url_for('planes') }}">Solicitar un plan</a></p>
 {% else %}
-<div class="card"><p class="muted">Aún no hay planes cargados. Ejecuta <code>flask --app run init-db</code>.</p></div>
+<div class="card"><p class="muted">Aún no hay planes cargados. Ejecuta <code>sql/03_datos_iniciales.sql</code> en MySQL.</p></div>
 {% endif %}
 
 <section class="card process">

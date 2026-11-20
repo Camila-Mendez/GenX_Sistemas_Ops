@@ -3,15 +3,12 @@
 
 # Framework web
 Flask==3.0.3
-Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.1
 python-dotenv==1.0.1
 
-# Drivers de base de datos (instala todos o solo el del motor que uses)
-PyMySQL==1.1.1            # MySQL / MariaDB
-cryptography==43.0.3      # requerido por PyMySQL para autenticación caching_sha2 (MySQL 8)
-psycopg2-binary==2.9.10   # PostgreSQL
-pyodbc==5.2.0             # SQL Server (requiere "ODBC Driver 18 for SQL Server" instalado en el sistema)
+# Conexión a MySQL (usada solo por app/utilities/db_connection.py)
+PyMySQL==1.1.1
+cryptography==43.0.3      # requerido por PyMySQL para la autenticación por defecto de MySQL 8
 
 # Pruebas automatizadas
 pytest==8.3.3

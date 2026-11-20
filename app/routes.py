@@ -1,14 +1,16 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 from functools import wraps
+import socket
 
-from flask import (abort, flash, jsonify, redirect, render_template, request,
-                   session, url_for)
+import pymysql
+from flask import (abort, current_app, flash, jsonify, redirect, render_template,
+                   request, session, url_for)
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import app
-from app.models import (ContactMessage, LoginEvent, ServicePlan, ServiceRequest,
-                        ServiceRequestItem, User)
-from app.utilities.db import check_database, db, node_name
+from app.utilities.db_connection import (check_database, commit, execute, fetch_all,
+                                         fetch_one, rollback)
 
 ROLES = {"admin", "cliente"}
 REQUEST_STATUSES = ["Recibida", "En análisis", "En implementación", "Activa", "Cancelada"]
@@ -36,6 +38,15 @@ def home_for(role):
     return "dashboard" if role == "admin" else "planes"
 
 
+def node_name():
+    """Nombre del servidor que atiende la petición (sirve para ver el failover)."""
+    return current_app.config.get("NODE_NAME") or socket.gethostname()
+
+
+def active_plans():
+    return fetch_all("SELECT * FROM planes WHERE active = TRUE ORDER BY price_monthly")
+
+
 def solicitud_actual():
     """La 'solicitud' en sesión equivale al carrito: {slug: servidores}."""
     return session.setdefault("solicitud", {})
@@ -45,10 +56,15 @@ def detalle_solicitud():
     items, total = [], Decimal("0")
     data = solicitud_actual()
     if data:
-        plans = ServicePlan.query.filter(ServicePlan.slug.in_(data.keys())).all()
+        placeholders = ", ".join(["%s"] * len(data))
+        plans = fetch_all(
+            f"SELECT * FROM planes WHERE active = TRUE AND slug IN ({placeholders}) "
+            "ORDER BY price_monthly",
+            tuple(data.keys()),
+        )
         for plan in plans:
-            servers = data[plan.slug]
-            subtotal = plan.price_monthly * servers
+            servers = data[plan["slug"]]
+            subtotal = plan["price_monthly"] * servers
             total += subtotal
             items.append({"plan": plan, "servers": servers, "subtotal": subtotal})
     return items, total
@@ -73,8 +89,7 @@ def index():
 
 @app.route("/servicios")
 def servicios():
-    plans = ServicePlan.query.filter_by(active=True).order_by(ServicePlan.price_monthly).all()
-    return render_template("servicios.html", plans=plans)
+    return render_template("servicios.html", plans=active_plans())
 
 
 @app.route("/nosotros")
@@ -92,9 +107,10 @@ def contacto():
             flash("Completa nombre, correo y mensaje.", "error")
             return render_template("contacto.html", form=request.form), 400
 
-        db.session.add(ContactMessage(name=name, email=email, message=message,
-                                      company=request.form.get("company", "").strip()))
-        db.session.commit()
+        execute(
+            "INSERT INTO mensajes_contacto (name, email, company, message) VALUES (%s, %s, %s, %s)",
+            (name, email, request.form.get("company", "").strip() or None, message),
+        )
         flash("Gracias, un ingeniero de GenX te contactará pronto.", "success")
         return redirect(url_for("contacto"))
 
@@ -120,36 +136,38 @@ def login():
         password = request.form.get("password", "")
         role = request.form.get("role")  # admin o cliente
 
-        user = User.query.filter_by(username=username).first()
-        valid = user is not None and user.check_password(password)
+        user = fetch_one(
+            "SELECT id, username, password_hash, role FROM usuarios WHERE username = %s",
+            (username,),
+        )
+        valid = user is not None and check_password_hash(user["password_hash"], password)
 
         # 1. Registrar intento en la bitácora (incluye el nodo que respondió)
-        db.session.add(LoginEvent(username=username[:50] or "-", success=valid,
-                                  node=node_name(), ip_address=request.remote_addr))
+        execute(
+            "INSERT INTO bitacora_login (username, success, node, ip_address) VALUES (%s, %s, %s, %s)",
+            (username[:50] or "-", valid, node_name(), request.remote_addr),
+        )
 
         # 2. Validación de credenciales
         if not valid:
-            db.session.commit()
             return render_template("login.html", error="Credenciales inválidas"), 401
 
         # 3. Validar tipo de acceso
-        if role not in ROLES or user.role != role:
-            db.session.commit()
+        if role not in ROLES or user["role"] != role:
             return render_template("login.html", error="Tipo de acceso incorrecto"), 403
 
         # 4. Guardar sesión
-        user.last_login = datetime.now(timezone.utc).replace(tzinfo=None)
-        db.session.commit()
+        execute("UPDATE usuarios SET last_login = NOW() WHERE id = %s", (user["id"],))
         session.clear()
-        session["user_id"] = user.id
-        session["username"] = user.username
-        session["role"] = user.role
+        session["user_id"] = user["id"]
+        session["username"] = user["username"]
+        session["role"] = user["role"]
 
         # 5. Redirección según tipo
         next_url = request.args.get("next")
         if next_url and next_url.startswith("/") and not next_url.startswith("//"):
             return redirect(next_url)
-        return redirect(url_for(home_for(user.role)))
+        return redirect(url_for(home_for(user["role"])))
 
     return render_template("login.html")
 
@@ -174,17 +192,21 @@ def register():
             error = "La contraseña debe tener al menos 8 caracteres"
         elif password != form.get("password_confirm"):
             error = "Las contraseñas no coinciden"
-        elif User.query.filter((User.username == username) | (User.email == email)).first():
-            error = "El usuario o correo ya existe"
+
+        if not error:
+            try:
+                execute(
+                    "INSERT INTO usuarios (username, email, full_name, company, password_hash, role) "
+                    "VALUES (%s, %s, %s, %s, %s, 'cliente')",
+                    (username, email, full_name, form.get("company", "").strip() or None,
+                     generate_password_hash(password)),
+                )
+            except pymysql.err.IntegrityError:
+                error = "El usuario o correo ya existe"
 
         if error:
             return render_template("register.html", error=error, form=form), 400
 
-        user = User(username=username, email=email, full_name=full_name,
-                    company=form.get("company", "").strip() or None, role="cliente")
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
         flash("Cuenta creada. Ya puedes iniciar sesión.", "success")
         return redirect(url_for("login"))
 
@@ -199,13 +221,21 @@ def register():
 @login_required("admin")
 def dashboard():
     db_ok, db_detail = check_database()
-    stats = {
-        "clientes": User.query.filter_by(role="cliente").count(),
-        "solicitudes": ServiceRequest.query.count(),
-        "pendientes": ServiceRequest.query.filter(
-            ServiceRequest.status.in_(["Recibida", "En análisis"])).count(),
-        "mensajes": ContactMessage.query.count(),
-    }
+    stats = fetch_one("""
+        SELECT
+          (SELECT COUNT(*) FROM usuarios WHERE role = 'cliente')                           AS clientes,
+          (SELECT COUNT(*) FROM solicitudes)                                               AS solicitudes,
+          (SELECT COUNT(*) FROM solicitudes WHERE status IN ('Recibida', 'En análisis'))   AS pendientes,
+          (SELECT COUNT(*) FROM mensajes_contacto)                                         AS mensajes
+    """)
+    requests_ = fetch_all("""
+        SELECT s.id, s.site, s.status, s.total_monthly, s.created_at,
+               u.full_name, u.company, u.email
+        FROM solicitudes s
+        JOIN usuarios u ON u.id = s.user_id
+        ORDER BY s.created_at DESC, s.id DESC
+        LIMIT 8
+    """)
     return render_template(
         "dashboard.html",
         username=session["username"],
@@ -213,9 +243,9 @@ def dashboard():
         db_ok=db_ok,
         db_detail=db_detail,
         stats=stats,
-        events=LoginEvent.query.order_by(LoginEvent.created_at.desc()).limit(8).all(),
-        requests=ServiceRequest.query.order_by(ServiceRequest.created_at.desc()).limit(8).all(),
-        messages=ContactMessage.query.order_by(ContactMessage.created_at.desc()).limit(5).all(),
+        events=fetch_all("SELECT * FROM bitacora_login ORDER BY id DESC LIMIT 8"),
+        requests=requests_,
+        messages=fetch_all("SELECT * FROM mensajes_contacto ORDER BY id DESC LIMIT 5"),
         statuses=REQUEST_STATUSES,
     )
 
@@ -223,11 +253,9 @@ def dashboard():
 @app.route("/dashboard/solicitud/<int:request_id>/estado", methods=["POST"])
 @login_required("admin")
 def update_request_status(request_id):
-    sr = db.session.get(ServiceRequest, request_id) or abort(404)
     status = request.form.get("status")
     if status in REQUEST_STATUSES:
-        sr.status = status
-        db.session.commit()
+        execute("UPDATE solicitudes SET status = %s WHERE id = %s", (status, request_id))
     return redirect(url_for("dashboard"))
 
 
@@ -248,8 +276,7 @@ def logout():
 @app.route("/planes")
 @login_required("cliente")
 def planes():
-    plans = ServicePlan.query.filter_by(active=True).order_by(ServicePlan.price_monthly).all()
-    return render_template("planes.html", plans=plans, seleccion=solicitud_actual())
+    return render_template("planes.html", plans=active_plans(), seleccion=solicitud_actual())
 
 
 # ---------------------------------------------------------
@@ -259,7 +286,7 @@ def planes():
 @app.route("/solicitud/agregar/<slug>", methods=["POST"])
 @login_required("cliente")
 def agregar_plan(slug):
-    if not ServicePlan.query.filter_by(slug=slug, active=True).first():
+    if not fetch_one("SELECT id FROM planes WHERE slug = %s AND active = TRUE", (slug,)):
         abort(404)
     data = solicitud_actual()
     data[slug] = data.get(slug, 0) + 1
@@ -299,7 +326,7 @@ def actualizar_plan(slug, action):
 
 
 # ---------------------------------------------------------
-# CONFIRMAR — equivalente al checkout; aquí sí se guarda en BD
+# CONFIRMAR — equivalente al checkout; aquí sí se guarda en MySQL
 # ---------------------------------------------------------
 
 @app.route("/confirmar", methods=["GET", "POST"])
@@ -315,21 +342,31 @@ def confirmar():
             return render_template("confirmar.html", items=items, total=total,
                                    error="Indica la sede o centro de datos"), 400
 
-        sr = ServiceRequest(
-            user_id=session["user_id"],
-            site=site,
-            contact_phone=request.form.get("contact_phone", "").strip() or None,
-            notes=request.form.get("notes", "").strip() or None,
-            total_monthly=total,
-        )
-        for item in items:
-            sr.items.append(ServiceRequestItem(plan_id=item["plan"].id,
-                                               servers=item["servers"],
-                                               unit_price=item["plan"].price_monthly))
-        db.session.add(sr)
-        db.session.commit()
+        # Encabezado + detalle en una sola transacción
+        try:
+            request_id = execute(
+                "INSERT INTO solicitudes (user_id, site, contact_phone, notes, total_monthly) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (session["user_id"], site,
+                 request.form.get("contact_phone", "").strip() or None,
+                 request.form.get("notes", "").strip() or None,
+                 total),
+                commit=False,
+            )
+            for item in items:
+                execute(
+                    "INSERT INTO solicitud_detalle (request_id, plan_id, servers, unit_price) "
+                    "VALUES (%s, %s, %s, %s)",
+                    (request_id, item["plan"]["id"], item["servers"], item["plan"]["price_monthly"]),
+                    commit=False,
+                )
+            commit()
+        except Exception:
+            rollback()
+            raise
+
         session.pop("solicitud", None)
-        return redirect(url_for("solicitud_enviada", request_id=sr.id))
+        return redirect(url_for("solicitud_enviada", request_id=request_id))
 
     return render_template("confirmar.html", items=items, total=total)
 
@@ -337,15 +374,30 @@ def confirmar():
 @app.route("/solicitud-enviada/<int:request_id>")
 @login_required("cliente")
 def solicitud_enviada(request_id):
-    sr = ServiceRequest.query.filter_by(id=request_id, user_id=session["user_id"]).first_or_404()
+    sr = fetch_one("SELECT * FROM solicitudes WHERE id = %s AND user_id = %s",
+                   (request_id, session["user_id"]))
+    if not sr:
+        abort(404)
     return render_template("solicitud_enviada.html", sr=sr)
 
 
 @app.route("/mis-solicitudes")
 @login_required("cliente")
 def mis_solicitudes():
-    requests_ = (ServiceRequest.query.filter_by(user_id=session["user_id"])
-                 .order_by(ServiceRequest.created_at.desc()).all())
+    requests_ = fetch_all(
+        "SELECT * FROM solicitudes WHERE user_id = %s ORDER BY created_at DESC, id DESC",
+        (session["user_id"],),
+    )
+    lines = fetch_all("""
+        SELECT d.request_id, d.servers, d.unit_price, p.name
+        FROM solicitud_detalle d
+        JOIN planes p ON p.id = d.plan_id
+        JOIN solicitudes s ON s.id = d.request_id
+        WHERE s.user_id = %s
+        ORDER BY d.id
+    """, (session["user_id"],))
+    for sr in requests_:
+        sr["detalle"] = [line for line in lines if line["request_id"] == sr["id"]]
     return render_template("mis_solicitudes.html", requests=requests_)
 
 

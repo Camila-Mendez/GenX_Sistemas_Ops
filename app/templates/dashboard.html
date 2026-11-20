@@ -35,7 +35,7 @@
         {% for sr in requests %}
           <tr>
             <td>{{ sr.id }}</td>
-            <td>{{ sr.user.full_name }}<br><small class="muted">{{ sr.user.company or sr.user.email }}</small></td>
+            <td>{{ sr.full_name }}<br><small class="muted">{{ sr.company or sr.email }}</small></td>
             <td>{{ sr.site }}</td>
             <td>${{ '%.2f'|format(sr.total_monthly) }}</td>
             <td>
@@ -65,7 +65,7 @@
         {% for e in events %}
           <li>
             <span class="status-dot {{ 'ok' if e.success else 'down' }}"></span>
-            <span><strong>{{ e.username }}</strong> <small class="muted">{{ e.created_at.strftime('%d/%m %H:%M:%S') }} UTC</small><br><code>{{ e.node }}</code></span>
+            <span><strong>{{ e.username }}</strong> <small class="muted">{{ e.created_at.strftime('%d/%m %H:%M:%S') }}</small><br><code>{{ e.node }}</code></span>
           </li>
         {% else %}
           <li class="muted">Sin registros.</li>
