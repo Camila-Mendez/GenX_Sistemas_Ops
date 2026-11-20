@@ -1,66 +1,63 @@
 {% extends "layout.html" %}
-{% block title %}La Carreta del Café — Inicio{% endblock %}
+{% block title %}GenX · Continuidad sin interrupciones{% endblock %}
 
 {% block content %}
 <section class="hero">
-  <div class="carousel">
-    <!-- slide 1 -->
-    <div class="carousel-slide active" style="background: linear-gradient(90deg, rgba(58,32,15,0.6), rgba(61,34,17,0.3));">
-      <div class="hero-left">
-        <h1 class="hero-title">Cafés de microlote con trazabilidad real</h1>
-        <p class="hero-sub">Conectamos productores costarricenses con compradores internacionales. Transparencia, calidad y comercio justo.</p>
-        <p style="margin-top:14px;">
-          <a href="{{url_for('shop')}}" class="btn">Visitar tienda</a>
-          <a href="{{url_for('contactsales')}}" class="btn small outline">Contact Sales</a>
-        </p>
-      </div>
-      <div class="hero-right">
-        <img src="{{ url_for('static', filename='img/carousel-1.png') }}" alt="Campo de café" />
-      </div>
+  <div class="hero-copy">
+    <span class="eyebrow">Recuperación ante desastres · Ubuntu Server</span>
+    <h1>Si un servidor cae, <span class="gradient-text">tu operación sigue.</span></h1>
+    <p class="lead">GenX diseña e implementa arquitecturas activo‑pasivo con replicación en tiempo real y conmutación automática, para que tus datos sigan disponibles aunque falle el hardware.</p>
+    <div class="actions">
+      <a href="{{ url_for('servicios') }}" class="btn">Ver servicios</a>
+      <a href="{{ url_for('contacto') }}" class="btn outline">Hablar con un ingeniero</a>
     </div>
+  </div>
 
-    <!-- slide 2 -->
-    <div class="carousel-slide" style="background: linear-gradient(90deg, rgba(58,32,15,0.6), rgba(61,34,17,0.3));">
-      <div class="hero-left">
-        <h1 class="hero-title">Fichas técnicas y calidad certificada</h1>
-        <p class="hero-sub">Laboratorios y Q-Graders para asegurar perfiles de taza reproducibles.</p>
-      </div>
-      <div class="hero-right">
-        <img src="{{ url_for('static', filename='img/carousel-2.png') }}" alt="Q-grader cup tasting" />
-      </div>
+  <div class="topology" aria-label="Diagrama de la arquitectura activo-pasivo">
+    <div class="node node-active">
+      <span class="dot"></span>
+      <strong>srv‑activo</strong>
+      <code>MASTER · 10.0.0.11</code>
     </div>
-
-    <!-- slide 3 -->
-    <div class="carousel-slide" style="background: linear-gradient(90deg, rgba(58,32,15,0.6), rgba(61,34,17,0.3));">
-      <div class="hero-left">
-        <h1 class="hero-title">Logística y exportación simplificada</h1>
-        <p class="hero-sub">Coordinamos desde la finca hasta la llegada al comprador internacional.</p>
-      </div>
-      <div class="hero-right">
-        <img src="{{ url_for('static', filename='img/carousel-3.png') }}" alt="Logística de exportación" />
-      </div>
+    <div class="link-line"><span>DRBD · rsync</span></div>
+    <div class="node node-passive">
+      <span class="dot"></span>
+      <strong>srv‑pasivo</strong>
+      <code>BACKUP · 10.0.0.12</code>
+    </div>
+    <div class="vip">
+      <span>IP virtual</span>
+      <code>10.0.0.10</code>
+      <small>keepalived · VRRP</small>
+    </div>
+    <div class="node node-client">
+      <strong>cliente‑desktop</strong>
+      <code>SSH · navegador</code>
     </div>
   </div>
 </section>
 
-<section class="jumbotron">
-  <h3 style="margin:0;color:var(--dark)">Nuestra misión</h3>
-  <p style="margin-top:8px" class="small-muted">Facilitar la venta directa de microlotes premium con trazabilidad, mejores precios para productores y procesos logísticos confiables.</p>
+<section class="metrics">
+  <div class="metric"><span class="metric-value">&lt; 60 s</span><span class="metric-label">Tiempo de conmutación (RTO)</span></div>
+  <div class="metric"><span class="metric-value">≈ 0</span><span class="metric-label">Pérdida de datos (RPO)</span></div>
+  <div class="metric"><span class="metric-value">24/7</span><span class="metric-label">Monitoreo de nodos</span></div>
 </section>
 
-<section class="grid">
-  <div class="kpi">
-    <h3>Para productores</h3>
-    <p>Digitalización, fichas técnicas, visibilidad internacional y mejores márgenes.</p>
-  </div>
-  <div class="kpi">
-    <h3>Para compradores</h3>
-    <p>Microlotes exclusivos, trazabilidad y pagos transparentes.</p>
-  </div>
-  <div class="kpi">
-    <h3>Servicios</h3>
-    <p>Logística, masterplans, marketing y soporte para exportación.</p>
-  </div>
+<section class="grid three">
+  <article class="card">
+    <div class="icon">⇄</div>
+    <h3>Sincronización</h3>
+    <p class="muted">rsync programado con cron y DRBD para replicar el almacenamiento bloque a bloque.</p>
+  </article>
+  <article class="card">
+    <div class="icon">⚡</div>
+    <h3>Failover automático</h3>
+    <p class="muted">keepalived mueve la IP virtual al servidor pasivo en cuanto el activo deja de responder.</p>
+  </article>
+  <article class="card">
+    <div class="icon">🛡</div>
+    <h3>Seguridad</h3>
+    <p class="muted">ufw, fail2ban y SSH con llaves para cerrar el acceso no autorizado.</p>
+  </article>
 </section>
-
 {% endblock %}

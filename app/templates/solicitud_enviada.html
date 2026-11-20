@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block title %}Solicitud enviada · GenX{% endblock %}
+
+{% block content %}
+<div class="card empty">
+  <div class="success-mark">✓</div>
+  <h1>Solicitud #{{ sr.id }} recibida</h1>
+  <p class="muted">Un ingeniero de GenX revisará tu solicitud para {{ sr.site }}. Total mensual estimado: <strong>${{ '%.2f'|format(sr.total_monthly) }}</strong>.</p>
+  <div class="button-row center">
+    <a class="btn" href="{{ url_for('mis_solicitudes') }}">Ver mis solicitudes</a>
+    <a class="btn outline" href="{{ url_for('planes') }}">Volver a planes</a>
+  </div>
+</div>
+{% endblock %}

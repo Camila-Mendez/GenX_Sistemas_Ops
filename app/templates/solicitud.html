@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block title %}Tu solicitud · GenX{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <span class="eyebrow">Solicitud</span>
+  <h1>Servicios seleccionados</h1>
+</header>
+
+{% if items %}
+<div class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Plan</th><th>Precio / servidor</th><th>Servidores</th><th>Subtotal</th><th></th></tr></thead>
+      <tbody>
+      {% for item in items %}
+        <tr>
+          <td>{{ item.plan.name }}</td>
+          <td>${{ '%.2f'|format(item.plan.price_monthly) }}</td>
+          <td>
+            <div class="qty">
+              <form method="POST" action="{{ url_for('actualizar_plan', slug=item.plan.slug, action='decrease') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn icon-btn outline" aria-label="Quitar un servidor">−</button>
+              </form>
+              <span>{{ item.servers }}</span>
+              <form method="POST" action="{{ url_for('actualizar_plan', slug=item.plan.slug, action='increase') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn icon-btn outline" aria-label="Agregar un servidor">+</button>
+              </form>
+            </div>
+          </td>
+          <td>${{ '%.2f'|format(item.subtotal) }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('quitar_plan', slug=item.plan.slug) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="link-btn">Quitar</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="summary">
+    <span>Total mensual estimado</span>
+    <strong>${{ '%.2f'|format(total) }}</strong>
+  </div>
+  <div class="button-row end">
+    <a class="btn outline" href="{{ url_for('planes') }}">Seguir agregando</a>
+    <a class="btn" href="{{ url_for('confirmar') }}">Confirmar solicitud</a>
+  </div>
+</div>
+{% else %}
+<div class="card empty">
+  <p class="muted">Tu solicitud está vacía.</p>
+  <a class="btn" href="{{ url_for('planes') }}">Ver planes</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}Servicios · GenX{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <span class="eyebrow">Servicios</span>
+  <h1>Planes de recuperación ante desastres</h1>
+  <p class="lead">Precios mensuales por servidor protegido. Cada plan incluye documentación técnica y una prueba de failover supervisada.</p>
+</header>
+
+{% if plans %}
+<section class="grid two">
+  {% for plan in plans %}
+  <article class="card plan">
+    <h3>{{ plan.name }}</h3>
+    <p class="muted">{{ plan.description }}</p>
+    <dl class="specs">
+      <div><dt>RTO</dt><dd>{{ plan.rto }}</dd></div>
+      <div><dt>RPO</dt><dd>{{ plan.rpo }}</dd></div>
+    </dl>
+    <p class="price">${{ '%.2f'|format(plan.price_monthly) }} <small>/ servidor / mes</small></p>
+  </article>
+  {% endfor %}
+</section>
+<p class="center"><a class="btn" href="{{ url_for('planes') }}">Solicitar un plan</a></p>
+{% else %}
+<div class="card"><p class="muted">Aún no hay planes cargados. Ejecuta <code>flask --app run init-db</code>.</p></div>
+{% endif %}
+
+<section class="card process">
+  <h2>Cómo trabajamos</h2>
+  <ol class="steps">
+    <li><strong>Levantamiento</strong><span>Inventario de servidores, red y datos críticos.</span></li>
+    <li><strong>Instalación</strong><span>Servidores activo/pasivo, SSH, rsync, DRBD y keepalived.</span></li>
+    <li><strong>Endurecimiento</strong><span>Reglas ufw, fail2ban y respaldos programados.</span></li>
+    <li><strong>Prueba de fallo</strong><span>Simulamos la caída del activo y validamos la recuperación.</span></li>
+  </ol>
+</section>
+{% endblock %}

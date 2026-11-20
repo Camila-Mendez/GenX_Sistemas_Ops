@@ -3,39 +3,57 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon_cdc.png') }}">
-  <title>{% block title %}La Carreta del Café{% endblock %}</title>
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <title>{% block title %}GenX · Recuperación ante Desastres{% endblock %}</title>
 </head>
-<body class="page-bg">
+<body>
 
   <header class="site-header">
     <div class="container header-inner">
-      <div class="brand">
-        <img src="{{ url_for('static', filename='img/logo-placeholder.png') }}" alt="La Carreta del Café logo" class="logo">
-        <div class="brand-text">
-          <span class="brand-name">La Carreta del Café</span>
-          <small class="brand-tag">Productores de café costarricenses</small>
-        </div>
-      </div>
+      <a class="brand" href="{{ url_for('index') }}">
+        <img src="{{ url_for('static', filename='img/genx-logo.svg') }}" alt="" class="logo">
+        <span class="brand-text">
+          <span class="brand-name">GenX<span class="accent">.</span></span>
+          <small class="brand-tag">Disaster Recovery · Costa Rica</small>
+        </span>
+      </a>
+
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Abrir menú">
+      <label for="nav-toggle" class="nav-toggle-label" aria-hidden="true"><span></span></label>
 
       <nav class="main-nav">
-        <a class= "main-nav.btn" href="{{ url_for('index') }}">Inicio</a>
-        <a class= "main-nav.btn" href="{{ url_for('aboutus') }}">Nosotros</a>
-        <a class= "main-nav.btn" href="{{ url_for('shop') }}">Tienda</a>
-        <a class= "main-nav.btn" href="{{ url_for('contactsales') }}">Contact Sales</a>
-        <a href="{{ url_for('cart') }}" class="btn small outline"> Carrito </a>
-        <a href="{{ url_for('login') }}" class="btn small outline">Login</a>
+        <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Inicio</a>
+        <a href="{{ url_for('servicios') }}" class="{{ 'active' if request.endpoint == 'servicios' }}">Servicios</a>
+        <a href="{{ url_for('nosotros') }}" class="{{ 'active' if request.endpoint == 'nosotros' }}">Nosotros</a>
+        <a href="{{ url_for('contacto') }}" class="{{ 'active' if request.endpoint == 'contacto' }}">Contacto</a>
 
+        {% if session.role == 'cliente' %}
+          <a href="{{ url_for('planes') }}" class="{{ 'active' if request.endpoint == 'planes' }}">Planes</a>
+          <a href="{{ url_for('mis_solicitudes') }}" class="{{ 'active' if request.endpoint == 'mis_solicitudes' }}">Mis solicitudes</a>
+          <a href="{{ url_for('solicitud') }}" class="btn small outline">Solicitud{% if solicitud_count %} <span class="badge">{{ solicitud_count }}</span>{% endif %}</a>
+        {% elif session.role == 'admin' %}
+          <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">Panel</a>
+        {% endif %}
+
+        {% if session.user_id %}
+          <a href="{{ url_for('logout') }}" class="btn small">Salir</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn small">Ingresar</a>
+        {% endif %}
       </nav>
     </div>
   </header>
 
   <main>
     <div class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
       {% block content %}{% endblock %}
     </div>
   </main>
@@ -43,41 +61,19 @@
   <footer class="site-footer">
     <div class="container footer-inner">
       <div>
-        <strong>La Carreta del Café </strong>
-        <p>Transparencia, trazabilidad y comercio justo. Conectamos productores con compradores internacionales.</p>
+        <strong class="brand-name">GenX<span class="accent">.</span></strong>
+        <p class="muted">Continuidad del negocio para servidores Ubuntu: replicación, failover automático y seguridad, desde nuestra oficina en Costa Rica.</p>
       </div>
       <div class="footer-links">
-        <p><a class="btn" href="{{ url_for('contactsales') }}">Contact Sales</a></p>
-        <p><a class= "btn" href="{{ url_for('aboutus') }}">Sobre nosotros</a></p>
+        <a href="{{ url_for('servicios') }}">Servicios</a>
+        <a href="{{ url_for('contacto') }}">Contacto</a>
+        <a href="{{ url_for('health') }}">Estado del nodo</a>
       </div>
     </div>
     <div class="footer-bottom">
-      <small>© {{ (2025) }} La Carreta del Café — All rights reserved</small>
+      <small>© {{ current_year }} GenX, S.A. — Todos los derechos reservados</small>
     </div>
   </footer>
-
-  <script>
-    // Carousel simple: cambia slide cada 5s
-    (function(){
-      const slides = document.querySelectorAll('.carousel-slide');
-      if(!slides.length) return;
-      let idx = 0;
-      setInterval(()=> {
-        slides[idx].classList.remove('active');
-        idx = (idx + 1) % slides.length;
-        slides[idx].classList.add('active');
-      }, 5000);
-    })();
-  </script>
-
-  <script>
-    document.querySelectorAll('.hover-img').forEach(img => {
-      const original = img.src;
-      const hover = img.dataset.hover;
-      img.addEventListener('mouseenter', () => img.src = hover);
-      img.addEventListener('mouseleave', () => img.src = original);
-    });
-  </script>
 
 </body>
 </html>

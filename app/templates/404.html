@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block title %}Página no encontrada · GenX{% endblock %}
+
+{% block content %}
+<div class="card empty">
+  <h1>404</h1>
+  <p class="muted">Esta ruta no existe en ninguno de nuestros nodos.</p>
+  <a class="btn" href="{{ url_for('index') }}">Ir al inicio</a>
+</div>
+{% endblock %}

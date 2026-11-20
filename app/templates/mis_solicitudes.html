@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block title %}Mis solicitudes · GenX{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <span class="eyebrow">Portal de clientes</span>
+  <h1>Mis solicitudes</h1>
+</header>
+
+{% for sr in requests %}
+<article class="card request">
+  <div class="request-head">
+    <h3>#{{ sr.id }} · {{ sr.site }}</h3>
+    <span class="status">{{ sr.status }}</span>
+  </div>
+  <ul class="summary-list">
+    {% for item in sr.items %}
+      <li><span>{{ item.plan.name }} × {{ item.servers }}</span><span>${{ '%.2f'|format(item.unit_price * item.servers) }}</span></li>
+    {% endfor %}
+  </ul>
+  <div class="summary"><span class="muted small">{{ sr.created_at.strftime('%d/%m/%Y %H:%M') }} UTC</span><strong>${{ '%.2f'|format(sr.total_monthly) }} / mes</strong></div>
+</article>
+{% else %}
+<div class="card empty">
+  <p class="muted">Aún no has enviado solicitudes.</p>
+  <a class="btn" href="{{ url_for('planes') }}">Ver planes</a>
+</div>
+{% endfor %}
+{% endblock %}

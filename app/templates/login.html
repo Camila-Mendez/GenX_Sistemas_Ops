@@ -1,36 +1,28 @@
 {% extends "layout.html" %}
-{% block title %}Login — La Carreta{% endblock %}
+{% block title %}Ingresar · GenX{% endblock %}
 
 {% block content %}
-<h1>Login</h1>
-
-<div style="display:flex;gap:24px;flex-wrap:wrap;">
-  <div class="form-card">
+<div class="auth">
+  <div class="card form auth-card">
+    <span class="eyebrow">Acceso</span>
+    <h1>Ingresar al portal</h1>
     <form method="POST">
-      <div class="form-field">
-        <label>Usuario</label>
-        <input type="text" name="username" required>
-      </div>
-      <div class="form-field">
-        <label>Contraseña</label>
-        <input type="password" name="password" required>
-      </div>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="field"><span>Usuario</span><input type="text" name="username" autocomplete="username" required autofocus></label>
+      <label class="field"><span>Contraseña</span><input type="password" name="password" autocomplete="current-password" required></label>
 
-      <div style="display:flex;gap:8px;margin-top:6px;">
-        <button class="btn" type="submit" name="role" value="user">Login as User (dashboard)</button>
-        <button class="btn" type="submit" name="role" value="shopper">Login as Shopper</button>
+      <div class="button-row">
+        <button class="btn" type="submit" name="role" value="cliente">Entrar como cliente</button>
+        <button class="btn outline" type="submit" name="role" value="admin">Entrar como administrador</button>
       </div>
     </form>
 
-    {% if error %}
-      <p style="color:red;margin-top:8px;">{{ error }}</p>
-    {% endif %}
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
   </div>
 
-  <div class="preview-card">
-    <h3>¿No tienes cuenta?</h3>
-    <p>Si sos productor y querés vender en la plataforma, <a href="{{ url_for('register') }}">regístrate como Shopper</a>. Para cuentas User (dashboard) contacta a Sales.</p>
-  </div>
+  <aside class="card auth-aside">
+    <h3>¿Aún no tienes cuenta?</h3>
+    <p class="muted">Si tu empresa quiere proteger sus servidores, <a href="{{ url_for('register') }}">crea una cuenta de cliente</a>. Las cuentas de administrador las crea el equipo de operaciones de GenX.</p>
+  </aside>
 </div>
-
 {% endblock %}

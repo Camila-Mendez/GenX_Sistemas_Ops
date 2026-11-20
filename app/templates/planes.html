@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block title %}Planes · GenX{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <span class="eyebrow">Portal de clientes</span>
+  <h1>Arma tu solicitud</h1>
+  <p class="lead">Agrega un plan por cada servidor que quieras proteger. Puedes ajustar la cantidad antes de confirmar.</p>
+</header>
+
+<section class="grid two">
+  {% for plan in plans %}
+  <article class="card plan">
+    <h3>{{ plan.name }}</h3>
+    <p class="muted">{{ plan.description }}</p>
+    <dl class="specs">
+      <div><dt>RTO</dt><dd>{{ plan.rto }}</dd></div>
+      <div><dt>RPO</dt><dd>{{ plan.rpo }}</dd></div>
+    </dl>
+    <div class="plan-footer">
+      <p class="price">${{ '%.2f'|format(plan.price_monthly) }} <small>/ servidor / mes</small></p>
+      <form method="POST" action="{{ url_for('agregar_plan', slug=plan.slug) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn small" type="submit">
+          Agregar{% if seleccion.get(plan.slug) %} ({{ seleccion[plan.slug] }}){% endif %}
+        </button>
+      </form>
+    </div>
+  </article>
+  {% else %}
+  <div class="card"><p class="muted">No hay planes disponibles.</p></div>
+  {% endfor %}
+</section>
+
+{% if seleccion %}
+<p class="center"><a class="btn" href="{{ url_for('solicitud') }}">Revisar solicitud →</a></p>
+{% endif %}
+{% endblock %}

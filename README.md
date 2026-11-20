@@ -1,109 +1,81 @@
-# La Carreta de Café - Web App con Python Flask
+# GenX · Portal de Recuperación ante Desastres
 
-```markdown
-# La Carreta del Café
+Aplicación web en Flask para **GenX, S.A.**, empresa que ofrece arquitecturas de recuperación ante desastres (DR) activo‑pasivo para servidores Ubuntu desde su oficina en Costa Rica.
 
-Aplicación web desarrollada con Flask para una tienda de café. Incluye páginas informativas, inicio de sesión, catálogo, carrito y un flujo de compra de demostración.
+El portal está pensado para ejecutarse **sobre la propia infraestructura DR del proyecto**: se publica en la IP virtual de keepalived y muestra qué nodo (activo o pasivo) está atendiendo, para evidenciar el failover en la demostración.
+
+> Esta rama reutiliza la estructura y el esquema de rutas de *La Carreta del Café* (rutas públicas → login con dos tipos → panel interno / zona de cliente → flujo de solicitud), con una nueva identidad visual y persistencia real en base de datos.
 
 ## Funcionalidades
 
-- Páginas de inicio, información de la empresa y contacto.
-- Inicio de sesión y registro de compradores.
-- Catálogo de productos de café.
-- Carrito de compras con opción de agregar, quitar y cambiar cantidades.
-- Checkout con datos de envío.
-- Flujo de pago simulado para mostrar los estados de compra exitosa o fallida.
-- Panel de dashboard para el rol de usuario interno.
+- Páginas públicas: inicio, servicios, nosotros y contacto (los mensajes se guardan en BD).
+- Login con dos tipos de acceso, validado contra la base de datos:
+  - **admin** → `/dashboard`: estado del nodo y de la BD, solicitudes (con cambio de estado), bitácora de accesos y mensajes.
+  - **cliente** → `/planes`: catálogo de planes DR, solicitud (tipo carrito), confirmación y "Mis solicitudes".
+- Registro de clientes; los administradores se crean por línea de comandos.
+- Bitácora de login que registra qué servidor respondió cada intento.
+- Endpoint `/health` (JSON, 200/503) para monitoreo o `track_script` de keepalived.
+- Contraseñas con hash, protección CSRF en todos los formularios.
 
-## Tecnologías
+## Mapa de rutas
 
-- Python
-- Flask
-- Jinja2
-- Flask-WTF
-- SQL Server y `pyodbc` contemplados para una futura integración
+| La Carreta del Café | GenX | Acceso |
+|---|---|---|
+| `/`, `/aboutus`, `/contactsales` | `/`, `/nosotros`, `/servicios`, `/contacto` | público |
+| `/login` (user / shopper) | `/login` (admin / cliente) | público |
+| `/register` (shopper) | `/register` (cliente) | público |
+| `/dashboard` | `/dashboard`, `/dashboard/solicitud/<id>/estado` | admin |
+| `/shop` | `/planes` | cliente |
+| `/add-to-cart`, `/cart`, `/remove-from-cart`, `/update-cart` | `/solicitud/agregar/<slug>`, `/solicitud`, `/solicitud/quitar/<slug>`, `/solicitud/actualizar/<slug>/<accion>` | cliente |
+| `/checkout`, `/payment`, `/payment-success` | `/confirmar`, `/solicitud-enviada/<id>`, `/mis-solicitudes` | cliente |
+| `/logout` | `/logout` | — |
+| — | `/health` | público |
 
-## Requisitos
+## Base de datos
 
-- Python instalado.
-- Git, si vas a clonar el repositorio.
-- En Windows, el controlador ODBC para SQL Server será necesario cuando se integre la persistencia con la base de datos.
+Compatible con **PostgreSQL, MySQL/MariaDB y SQL Server** (vía SQLAlchemy). Se elige con la variable `DB_ENGINE`; sin configurar, usa SQLite local para desarrollo. Guía paso a paso: [docs/BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md).
 
-## Instalación y ejecución en Windows
+## Instalación rápida
 
-Clona el repositorio y entra en su carpeta:
-
-```powershell
-git clone <URL_DEL_REPOSITORIO>
-cd LaCarretadelcafe
+```bash
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+cp .env.example .env               # editar valores
+flask --app run init-db            # crea tablas y planes
+flask --app run create-user admin --role admin
+python run.py                      # http://127.0.0.1:5000
 ```
 
-Crea y activa un entorno virtual:
+Para escuchar en la red (servidores Ubuntu): `FLASK_HOST=0.0.0.0 python run.py`.
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
+## Pruebas
 
-Instala las dependencias:
-
-```powershell
-python -m pip install -r requirements.txt
-```
-
-Inicia la aplicación:
-
-```powershell
-python run.py
-```
-
-Luego abre en el navegador la dirección local que Flask muestre en la terminal, normalmente:
-
-```text
-http://127.0.0.1:5000/
+```bash
+pytest -q
 ```
 
 ## Estructura del proyecto
 
 ```text
-LaCarretadelcafe/
 ├── app/
-│   ├── static/
-│   │   ├── img/
-│   │   └── styles.css
-│   ├── templates/
-│   ├── utilities/
-│   │   └── db_connection.py
-│   ├── config.py
+│   ├── static/            # styles.css, favicon y logo
+│   ├── templates/         # vistas Jinja2
+│   ├── utilities/db.py    # instancia SQLAlchemy, health check, nombre del nodo
+│   ├── cli.py             # comandos init-db y create-user
+│   ├── config.py          # arma la cadena de conexión según DB_ENGINE
+│   ├── models.py          # usuarios, planes, solicitudes, bitácora, mensajes
 │   ├── routes.py
 │   └── __init__.py
+├── docs/BASE_DE_DATOS.md
+├── sql/                   # creación de base y usuario por motor
+├── tests/
+├── .env.example
 ├── requirements.txt
 └── run.py
 ```
 
-## Estado actual de la aplicación
+## Seguridad
 
-La aplicación es una demostración funcional de la tienda. Por el momento:
-
-- Los usuarios y productos se gestionan con datos definidos en el código.
-- El carrito y los datos temporales de compra se guardan en la sesión de Flask.
-- El resultado del pago se simula; no se conecta a una pasarela real.
-- Las rutas de la aplicación aún no guardan usuarios, productos, pedidos ni pagos en una base de datos.
-- Existe un módulo de conexión preparado para SQL Server, pero todavía no forma parte del flujo de la aplicación.
-
-## Configuración y seguridad
-
-La aplicación puede leer `SECRET_KEY` desde las variables de entorno. Antes de desplegarla, configura una clave secreta segura y evita usar los valores de desarrollo.
-
-El módulo de conexión a SQL Server espera las variables de entorno `DB_SERVER`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. No guardes credenciales reales en el repositorio. El archivo `.env` no se carga automáticamente con la configuración actual; si decides usarlo, tendrás que configurar explícitamente su carga.
-
-No ejecutes la aplicación con el modo de depuración habilitado en un entorno de producción.
-
-## Próximos pasos
-
-- Definir e integrar los modelos de datos de la aplicación.
-- Conectar las rutas con SQL Server.
-- Persistir usuarios, productos, inventario, pedidos, pagos y envíos.
-- Añadir validaciones y pruebas para los flujos de registro y compra.
-- Integrar una pasarela de pago real cuando corresponda.
-```
+- Define un `SECRET_KEY` largo y aleatorio; nunca subas `.env` al repositorio.
+- No ejecutes con `FLASK_DEBUG=1` en producción; para producción usa gunicorn detrás de nginx.

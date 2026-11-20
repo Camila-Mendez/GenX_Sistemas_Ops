@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block title %}Confirmar solicitud · GenX{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <span class="eyebrow">Confirmar</span>
+  <h1>Datos de implementación</h1>
+</header>
+
+<div class="split">
+  <form method="POST" class="card form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="field"><span>Sede o centro de datos *</span><input type="text" name="site" placeholder="Oficina San José, rack 2" required></label>
+    <label class="field"><span>Teléfono de contacto</span><input type="tel" name="contact_phone"></label>
+    <label class="field"><span>Notas técnicas</span><textarea name="notes" rows="4" placeholder="Versión de Ubuntu, tamaño de discos, servicios críticos…"></textarea></label>
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    <button class="btn" type="submit">Enviar solicitud</button>
+  </form>
+
+  <aside class="card">
+    <h3>Resumen</h3>
+    <ul class="summary-list">
+      {% for item in items %}
+        <li><span>{{ item.plan.name }} × {{ item.servers }}</span><span>${{ '%.2f'|format(item.subtotal) }}</span></li>
+      {% endfor %}
+    </ul>
+    <div class="summary"><span>Total mensual</span><strong>${{ '%.2f'|format(total) }}</strong></div>
+  </aside>
+</div>
+{% endblock %}
